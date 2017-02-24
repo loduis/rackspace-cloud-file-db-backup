@@ -48,13 +48,13 @@ class Application
     {
         (new Dotenv($basePath))->load();
         $options = [
-            'identity_endpoint' => getenv('IDENTITY_ENDPOINT'),
-            'region'            => getenv('REGION'),
-            'directory'         => getenv('DIRECTORY'),
-            'container'         => getenv('CONTAINER'),
-            'user_name'         => getenv('USER_NAME'),
-            'api_key'           => getenv('API_KEY'),
-            'max_files'         => getenv('MAX_FILES')
+            'identity_endpoint' => getenv('RACKSPACE_IDENTITY_ENDPOINT'),
+            'region'            => getenv('RACKSPACE_REGION'),
+            'directory'         => getenv('RACKSPACE_DIRECTORY'),
+            'container'         => getenv('RACKSPACE_CONTAINER'),
+            'user_name'         => getenv('RACKSPACE_USER_NAME'),
+            'api_key'           => getenv('RACKSPACE_API_KEY'),
+            'max_files'         => getenv('RACKSPACE_MAX_FILES')
         ];
 
         return new static($basePath, $options);
