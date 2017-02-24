@@ -1,0 +1,9 @@
+.env
+.php_cs.cache
+composer.lock
+
+.idea/
+vendor/
+src/Old/
+
+

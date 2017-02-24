@@ -1,0 +1,4 @@
+suites:
+    main:
+        namespace: Rackspace\CloudFiles
+        psr4_prefix: Rackspace\CloudFiles

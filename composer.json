@@ -1,0 +1,24 @@
+{
+    "name": "loduis/rackspace-cloud-file-db-upload",
+    "description": "This package allows you to upload your database daily to rackspace cloud files",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Loduis Madariaga",
+            "email": "loduis@gmail.com"
+        }
+    ],
+    "require": {
+        "rackspace/php-opencloud": "~1.16",
+        "vlucas/phpdotenv": "~v2.2.0"
+    },
+    "require-dev": {
+        "phpspec/phpspec": "~2.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "Rackspace\\CloudFiles\\Backup\\": "src/"
+        }
+    },
+    "minimum-stability": "dev"
+}
