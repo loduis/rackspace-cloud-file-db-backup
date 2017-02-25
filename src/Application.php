@@ -7,10 +7,12 @@ use ReflectionClass;
 use RuntimeException;
 use OpenCloud\Rackspace;
 use Guzzle\Common\Event;
+use InvalidArgumentException;
+use RecursiveDirectoryIterator;
 
 /**
  * Class Application
- * @property Cache $cache
+ *
  * @package Rackspace\CloudFiles\Backup
  */
 class Application
@@ -19,6 +21,10 @@ class Application
      * @var Directory
      */
     private $directory;
+
+    private $container;
+
+    private $cache;
 
     public function __construct($basePath, array $options)
     {
@@ -33,11 +39,11 @@ class Application
 
         $this->registerProgress($client, $options);
 
-        $container = new Container($client, $options['region'], $options['container']);
+        $this->container = new Container($client, $options['region'], $options['container'], $options['max_files']);
 
-        $this->directory = new Directory($this->realPath($basePath, $options['directory']), $container);
+        $this->directory = new Directory($this->realPath($basePath, $options['directory']));
 
-        $this->max($options['max_files']);
+        $this->cache     = new Cache($this->container, $this->directory, $options['file_prefix']);
     }
 
     /**
@@ -54,46 +60,87 @@ class Application
             'container'         => getenv('RACKSPACE_CONTAINER'),
             'user_name'         => getenv('RACKSPACE_USER_NAME'),
             'api_key'           => getenv('RACKSPACE_API_KEY'),
-            'max_files'         => getenv('RACKSPACE_MAX_FILES')
+            'max_files'         => getenv('RACKSPACE_MAX_FILES'),
+            'file_prefix'       => getenv('RACKSPACE_FILE_PREFIX')
         ];
 
         return new static($basePath, $options);
     }
 
     /**
-     * @param string $directory
+     * Scan filename in directory
+     *
+     * @param $directory
      * @return File[]
      */
     public function scan($directory)
     {
-        return $this->directory->scan($directory);
+        $directory = $this->directory->joinPath($directory);
+
+        $this->directory->check($directory);
+
+        $dir   = new RecursiveDirectoryIterator($directory, RecursiveDirectoryIterator::SKIP_DOTS);
+        $files = [];
+
+        foreach ($dir as $fileInfo) {
+            if (File::isDaily($fileInfo)) {
+                $files[] = $this->file($this->directory->removeBasePath($fileInfo));
+            }
+        }
+
+        return $files;
     }
 
     public function download($filename)
     {
-        return $this->directory->download($filename);
+        if (!$this->directory->exists($filename)) {
+            if (!$this->directory->make($filename)) {
+                throw new InvalidArgumentException(sprintf('%s does not exist', $this->directory->getName($filename)));
+            }
+            return $this->file($filename)->download();
+        }
+
+        return true;
     }
 
     public function purge($keepTheLast = true)
     {
-        $this->directory->purge($keepTheLast);
+        $newest = $keepTheLast ? $this->findNewest() : null;
+        foreach ($this->cache->keys() as $filename) {
+            if ((!$newest || $newest->path() != $filename)) {
+                $this->directory->delete($filename);
+            }
+        }
     }
 
     public function findOldest()
     {
-        return $this->cache()->findOldest();
+        $oldest = null;
+        $time   = strtotime('now');
+        $count  = 0;
+        foreach ($this->cache as $filename => $fileTime) {
+            if ($time > $fileTime) {
+                $time = $fileTime;
+                $oldest = $filename;
+            }
+            $count ++;
+        }
+
+        return $oldest && $count > $this->container->maxFiles() ? $this->file($oldest) : null;
     }
 
-    public function max($max)
+    private function findNewest()
     {
-        $this->directory->container()->max($max);
+        $newest = null;
+        $time   = 0;
+        foreach ($this->cache as $filename => $fileTime) {
+            if ($fileTime > $time) {
+                $time   = $fileTime;
+                $newest = $filename;
+            }
+        }
 
-        return $this;
-    }
-
-    public function cache()
-    {
-        return $this->directory->cache();
+        return $newest ? $this->file($newest) : null;
     }
 
     private function resolveEndPoint($endPoint)
@@ -129,13 +176,8 @@ class Application
         return realpath($basePath . DIRECTORY_SEPARATOR . $directory);
     }
 
-
-    public function __get($property)
+    private function file($name)
     {
-        if (method_exists($this, $property)) {
-            return $this->$property();
-        }
-
-        return null;
+        return new File($this->container, $this->directory, $this->cache, $name);
     }
 }

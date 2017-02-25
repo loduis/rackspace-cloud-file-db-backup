@@ -13,11 +13,12 @@ class Container
      */
     private $store;
 
-    private $max = 30;
+    private $maxFiles;
 
-    public function __construct(Rackspace $client, $region, $name)
+    public function __construct(Rackspace $client, $region, $name, $maxFiles = 30)
     {
-        $this->store = $client->objectStoreService(null, $region)->getContainer($name);
+        $this->store    = $client->objectStoreService(null, $region)->getContainer($name);
+        $this->maxFiles = $maxFiles;
     }
 
     /**
@@ -63,20 +64,21 @@ class Container
     }
 
     /**
-     * Obtiene la lista de archivos en el container
+     * @param  array $params
+     * @return \OpenCloud\ObjectStore\Resource\DataObject[]
      */
-    public function all()
+    public function all(array $params = [])
     {
-        return $this->store->objectList();
+        return $this->store->objectList($params);
     }
 
-    public function max($max = null)
+    public function maxFiles($max = null)
     {
         if ($max === null) {
-            return $this->max;
+            return $this->maxFiles;
         }
 
-        return $this->max = (int) $max;
+        return $this->maxFiles = (int) $max;
     }
 
     public function copy($from, $to)

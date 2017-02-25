@@ -7,57 +7,46 @@ use IteratorAggregate;
 
 class Cache implements IteratorAggregate
 {
-    const FILE_NAME = '.rackspace_cloud_files.json';
+    const FILE_NAME = '.cache_cloud_files.json';
 
+    /**
+     * Directory that contain the cache file
+     *
+     * @var Directory
+     */
     private $directory;
 
+    /**
+     * @var Container
+     */
+    private $container;
+
+    /**
+     * Data of cache
+     *
+     * @var array
+     */
     private $data = [];
 
-    public function __construct(Directory $directory)
+
+    /**
+     * Ignore data when refresh cache
+     *
+     * @var array
+     */
+    private $filePrefix = [];
+
+    public function __construct(Container $container, Directory $directory, $filePrefix)
     {
-        $this->directory = $directory;
-        $this->data      = $this->get();
-    }
-
-    private function getFilename()
-    {
-        return $this->directory->path() . DIRECTORY_SEPARATOR . self::FILE_NAME;
-    }
-
-    private function get()
-    {
-        $data = [];
-
-        $filename = $this->getFilename();
-        if (file_exists($filename)) {
-            $content = file_get_contents($filename);
-            if ($content !== false) {
-                $data = json_decode($content, true);
-                if (!is_array($data)) {
-                    $data = [];
-                }
-            }
-        } else {
-            $data = $this->refresh();
-        }
-
-        return $data;
+        $this->directory  = $directory;
+        $this->container  = $container;
+        $this->filePrefix = $filePrefix;
+        $this->data       = $this->get();
     }
 
     public function exists($filename)
     {
         return isset($this->data[$filename]);
-    }
-
-    private function save(array $data)
-    {
-        $content = json_encode(
-            $data,
-            JSON_PRETTY_PRINT |
-            JSON_UNESCAPED_SLASHES
-        );
-
-        return file_put_contents($this->getFilename(), $content) !== false;
     }
 
     public function put($path, $time)
@@ -78,37 +67,6 @@ class Cache implements IteratorAggregate
         return true;
     }
 
-    public function findOldest()
-    {
-        $oldest = null;
-        $time   = strtotime('now');
-        $count  = 0;
-        foreach ($this->data as $filename => $fileTime) {
-            if ($time > $fileTime) {
-                $time = $fileTime;
-                $oldest = $filename;
-            }
-            $count ++;
-        }
-
-        return $oldest && $count > $this->container()->max() ?
-            new File($this->directory, $oldest) : null;
-    }
-
-    public function findNewest()
-    {
-        $newest = null;
-        $time   = 0;
-        foreach ($this->data as $filename => $fileTime) {
-            if ($fileTime > $time) {
-                $time   = $fileTime;
-                $newest = $filename;
-            }
-        }
-
-        return $newest ? new File($this->directory, $newest) : null;
-    }
-
     public function getIterator()
     {
         return new ArrayIterator($this->data);
@@ -119,17 +77,38 @@ class Cache implements IteratorAggregate
         return array_keys($this->data);
     }
 
-    private function container()
+    private function getFilename()
     {
-        return $this->directory->container();
+        return $this->directory->path() . DIRECTORY_SEPARATOR . static::FILE_NAME;
     }
 
+    /**
+     * Get cache
+     *
+     * @return array
+     */
+    private function get()
+    {
+        $filename = $this->getFilename();
+        if (file_exists($filename)) {
+            $content = file_get_contents($filename);
+            return $content !== false ? (array) json_decode($content, true) : $this->refresh();
+        }
+
+        return $this->refresh();
+    }
+
+    /**
+     * Refresh cache from container
+     *
+     * @return array
+     */
     private function refresh()
     {
         $data = [];
-        foreach ($this->container()->all() as $file) {
+        foreach ($this->container->all($this->filterParams()) as $file) {
             $name = $file->getName();
-            if ($time = File::extractTime(basename($name))) {
+            if ($time = File::extractTime($name)) {
                 $data[$name] = $time;
             }
         }
@@ -138,5 +117,26 @@ class Cache implements IteratorAggregate
         }
 
         return $data;
+    }
+
+    private function filterParams()
+    {
+        $params = [];
+        if ($this->filePrefix) {
+            $params['prefix'] = $this->filePrefix;
+        }
+
+        return $params;
+    }
+
+    private function save(array $data)
+    {
+        $content = json_encode(
+            $data,
+            JSON_PRETTY_PRINT |
+            JSON_UNESCAPED_SLASHES
+        );
+
+        return file_put_contents($this->getFilename(), $content) !== false;
     }
 }

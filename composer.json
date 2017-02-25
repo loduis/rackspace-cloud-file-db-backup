@@ -10,7 +10,7 @@
     ],
     "require": {
         "rackspace/php-opencloud": "~1.16",
-        "vlucas/phpdotenv": "~v2.2.0"
+        "vlucas/phpdotenv": "~v2.2"
     },
     "require-dev": {
         "phpspec/phpspec": "~2.1"
@@ -20,5 +20,14 @@
             "Rackspace\\CloudFiles\\Backup\\": "src/"
         }
     },
-    "minimum-stability": "dev"
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.0-dev"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
 }
