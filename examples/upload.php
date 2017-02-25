@@ -9,7 +9,7 @@ try {
 
     // Scan directory and upload files to container
 
-    foreach ($app->scan('db/daily') as $file) {
+    foreach ($app->scan() as $file) {
         if ($file->upload()) {
             echo 'UPLOAD: ', $file, PHP_EOL;
         }

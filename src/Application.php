@@ -26,6 +26,13 @@ class Application
 
     private $cache;
 
+    /**
+     * This is util when you has one folder in container that no required sync
+     *
+     * @var mixed|null
+     */
+    private $scanFiles;
+
     public function __construct($basePath, array $options)
     {
         $client = new Rackspace(
@@ -43,7 +50,9 @@ class Application
 
         $this->directory = new Directory($this->realPath($basePath, $options['directory']));
 
-        $this->cache     = new Cache($this->container, $this->directory, $options['file_prefix']);
+        $this->scanFiles  = isset($options['scan_files']) ? $options['scan_files'] : null;
+
+        $this->cache     = new Cache($this->container, $this->directory, $this->scanFiles);
     }
 
     /**
@@ -61,7 +70,7 @@ class Application
             'user_name'         => getenv('RACKSPACE_USER_NAME'),
             'api_key'           => getenv('RACKSPACE_API_KEY'),
             'max_files'         => getenv('RACKSPACE_MAX_FILES'),
-            'file_prefix'       => getenv('RACKSPACE_FILE_PREFIX')
+            'scan_files'        => getenv('RACKSPACE_SCAN_FILES')
         ];
 
         return new static($basePath, $options);
@@ -73,8 +82,9 @@ class Application
      * @param $directory
      * @return File[]
      */
-    public function scan($directory)
+    public function scan($directory = null)
     {
+        $directory = $directory ?: $this->scanFiles;
         $directory = $this->directory->joinPath($directory);
 
         $this->directory->check($directory);
