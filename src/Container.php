@@ -29,7 +29,7 @@ class Container
      */
     public function upload(File $file)
     {
-        $entityBody = EntityBody::factory($file->content());
+        $entityBody = EntityBody::factory($file->resource());
 
         $url = clone $this->store->getUrl();
         $url->addPath($file->path());

@@ -42,7 +42,12 @@ class File
 
     public function content()
     {
-        return file_get_contents($this->directory->joinPath($this->path));
+        return file_get_contents($this->fullPath());
+    }
+
+    public function resource($mode = 'r')
+    {
+        return fopen($this->fullPath(), $mode);
     }
 
     public function upload()
@@ -101,5 +106,10 @@ class File
     private function endDay($time)
     {
         return (int) date('t', $time);
+    }
+
+    private function fullPath()
+    {
+        return $this->directory->joinPath($this->path);
     }
 }
