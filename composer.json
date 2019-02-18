@@ -8,13 +8,6 @@
             "email": "loduis@gmail.com"
         }
     ],
-    "require": {
-        "rackspace/php-opencloud": "~1.16",
-        "vlucas/phpdotenv": "~v2.2"
-    },
-    "require-dev": {
-        "phpspec/phpspec": "~2.1"
-    },
     "autoload": {
         "psr-4": {
             "Rackspace\\CloudFiles\\Backup\\": "src/"
@@ -22,12 +15,17 @@
     },
     "extra": {
         "branch-alias": {
-            "dev-master": "1.0-dev"
+            "dev-master": "1.1-dev"
         }
     },
     "config": {
         "sort-packages": true
     },
     "minimum-stability": "dev",
-    "prefer-stable": true
+    "prefer-stable": true,
+    "require": {
+        "php-opencloud/openstack": "^3.0",
+        "phpspec/phpspec": "^5.1",
+        "vlucas/phpdotenv": "^3.3"
+    }
 }

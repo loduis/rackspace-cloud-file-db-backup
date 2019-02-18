@@ -10,6 +10,7 @@ try {
     // Scan directory and upload files to container
 
     foreach ($app->scan() as $file) {
+        echo $file->path(), PHP_EOL;
         if ($file->upload()) {
             echo 'UPLOAD: ', $file, PHP_EOL;
         }
@@ -19,17 +20,20 @@ try {
 
     if (($oldest = $app->findOldest())) {
         if ($oldest->isCopyOfEndMonth()) {
-            $oldest->move('db/history');
-            echo 'MOVE... ', $oldest, PHP_EOL;
+            if ($oldest->move('db/history')) {
+                echo 'MOVE... ', $oldest, PHP_EOL;
+            }
         } else {
-            $oldest->delete();
-            echo 'DELETE... ', $oldest, PHP_EOL;
+            if ($oldest->delete()) {
+                echo 'DELETE... ', $oldest, PHP_EOL;
+            }
         }
     }
 
     // Purge file on directory
 
     $app->purge();
+
 } catch (Exception $e) {
     echo $e->getMessage(), PHP_EOL;
 }

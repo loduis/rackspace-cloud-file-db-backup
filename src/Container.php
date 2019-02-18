@@ -2,9 +2,8 @@
 
 namespace Rackspace\CloudFiles\Backup;
 
-use OpenCloud\Rackspace;
-use Guzzle\Http\EntityBody;
-use Guzzle\Http\Exception\BadResponseException;
+use Throwable;
+use OpenStack\Common\Error\BadResponseError;
 
 class Container
 {
@@ -17,7 +16,7 @@ class Container
 
     public function __construct(Rackspace $client, $region, $name, $maxFiles = 30)
     {
-        $this->store    = $client->objectStoreService(null, $region)->getContainer($name);
+        $this->store    = $client->objectStoreV1()->getContainer($name);
         $this->maxFiles = $maxFiles;
     }
 
@@ -29,16 +28,17 @@ class Container
      */
     public function upload(File $file)
     {
-        $entityBody = EntityBody::factory($file->resource());
+        try {
+            $this->store->createObject([
+                'name' => $file->path(),
+                'stream' => $file->stream()
+            ]);
+        } catch (Throwable $e) {
+            throw $e;
+            return false;
+        }
 
-        $url = clone $this->store->getUrl();
-        $url->addPath($file->path());
-
-        $headers = [];
-
-        $response = $this->store->getClient()->put($url, $headers, $entityBody)->send();
-
-        return $response->getStatusCode() == 201;
+        return true;
     }
 
     /**
@@ -69,7 +69,7 @@ class Container
      */
     public function all(array $params = [])
     {
-        return $this->store->objectList($params);
+        return $this->store->listObjects($params);
     }
 
     public function maxFiles($max = null)
@@ -83,24 +83,38 @@ class Container
 
     public function copy($from, $to)
     {
-        return $this->store->dataObject()
-            ->setName($from)
-            ->copy($this->store->getName() . '/' . $to)
-            ->getStatusCode() == 201;
+        try {
+            $this->store->getObject($from)
+                ->copy([
+                    'destination' => $this->store->name . '/' . $to
+                ]);
+        } catch (Throwable $e) {
+            throw $e;
+            if ($this->isNotFound($e)) {
+                return true;
+            }
+            throw $e;
+        }
+
+        return true;
     }
 
     public function delete($filename)
     {
         try {
-            return $this->store->dataObject()
-                ->setName($filename)
-                ->delete()
-                ->getStatusCode() == 204;
-        } catch (BadResponseException $e) {
-            if ($e->getResponse()->getStatusCode() == 404) {
+            $this->store->getObject($filename)->delete();
+        } catch (Throwable $e) {
+            if ($this->isNotFound($e)) {
                 return true;
             }
             throw $e;
         }
+
+        return true;
+    }
+
+    protected function isNotFound($e)
+    {
+         return $e instanceof BadResponseError && $e->getResponse()->getStatusCode() == 404;
     }
 }

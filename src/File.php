@@ -3,6 +3,7 @@
 namespace Rackspace\CloudFiles\Backup;
 
 use SplFileInfo;
+use GuzzleHttp\Psr7;
 
 class File
 {
@@ -48,6 +49,11 @@ class File
     public function resource($mode = 'r')
     {
         return fopen($this->fullPath(), $mode);
+    }
+
+    public function stream()
+    {
+        return Psr7\stream_for($this->resource());
     }
 
     public function upload()

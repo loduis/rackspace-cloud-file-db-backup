@@ -5,7 +5,6 @@ namespace Rackspace\CloudFiles\Backup;
 use Dotenv\Dotenv;
 use ReflectionClass;
 use RuntimeException;
-use OpenCloud\Rackspace;
 use Guzzle\Common\Event;
 use InvalidArgumentException;
 use RecursiveDirectoryIterator;
@@ -35,16 +34,9 @@ class Application
 
     public function __construct($basePath, array $options)
     {
-        $client = new Rackspace(
-            $this->resolveEndPoint($options['identity_endpoint']),
-            [
-                'username' => $options['user_name'],
-                'apiKey'   => $options['api_key']
-            ],
-            $options
-        );
+        $client = new Rackspace($options);
 
-        $this->registerProgress($client, $options);
+        // $this->registerProgress($client, $options);
 
         $this->container = new Container($client, $options['region'], $options['container'], $options['max_files']);
 
@@ -61,7 +53,7 @@ class Application
      */
     public static function fromDotEnv($basePath)
     {
-        (new Dotenv($basePath))->load();
+        Dotenv::create($basePath)->load();
         $options = [
             'identity_endpoint' => getenv('RACKSPACE_IDENTITY_ENDPOINT'),
             'region'            => getenv('RACKSPACE_REGION'),
@@ -153,25 +145,6 @@ class Application
         return $newest ? $this->file($newest) : null;
     }
 
-    private function resolveEndPoint($endPoint)
-    {
-        $reflection = new ReflectionClass(Rackspace::class);
-
-        foreach ($reflection->getConstants() as $constant) {
-            if ($endPoint == $constant) {
-                return $endPoint;
-            }
-        }
-
-        $endPoint = $endPoint . '_IDENTITY_ENDPOINT';
-
-        if ($reflection->hasConstant($endPoint)) {
-            return $reflection->getConstant($endPoint);
-        }
-
-        return new RuntimeException('Not can\'t be resolve endpoint: ' . $endPoint);
-    }
-
     private function registerProgress($client, array $options)
     {
         if (isset($options[Rackspace::CURL_OPTIONS])) {
@@ -189,5 +162,10 @@ class Application
     private function file($name)
     {
         return new File($this->container, $this->directory, $this->cache, $name);
+    }
+
+    public function all()
+    {
+        return $this->container->all();
     }
 }
