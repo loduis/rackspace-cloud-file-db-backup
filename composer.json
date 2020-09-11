@@ -24,8 +24,9 @@
     "minimum-stability": "dev",
     "prefer-stable": true,
     "require": {
+        "php": "^7.3",
         "php-opencloud/openstack": "^3.0",
         "phpspec/phpspec": "^5.1",
-        "vlucas/phpdotenv": "^3.3"
+        "vlucas/phpdotenv": "^5.0"
     }
 }
