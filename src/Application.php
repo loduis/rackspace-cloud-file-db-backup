@@ -53,16 +53,16 @@ class Application
      */
     public static function fromDotEnv($basePath)
     {
-        Dotenv::create($basePath)->load();
+        Dotenv::createImmutable($basePath)->load();
         $options = [
-            'identity_endpoint' => getenv('RACKSPACE_IDENTITY_ENDPOINT'),
-            'region'            => getenv('RACKSPACE_REGION'),
-            'directory'         => getenv('RACKSPACE_DIRECTORY'),
-            'container'         => getenv('RACKSPACE_CONTAINER'),
-            'user_name'         => getenv('RACKSPACE_USER_NAME'),
-            'api_key'           => getenv('RACKSPACE_API_KEY'),
-            'max_files'         => getenv('RACKSPACE_MAX_FILES'),
-            'scan_files'        => getenv('RACKSPACE_SCAN_FILES')
+            'identity_endpoint' => $_ENV['RACKSPACE_IDENTITY_ENDPOINT'],
+            'region'            => $_ENV['RACKSPACE_REGION'],
+            'directory'         => $_ENV['RACKSPACE_DIRECTORY'],
+            'container'         => $_ENV['RACKSPACE_CONTAINER'],
+            'user_name'         => $_ENV['RACKSPACE_USER_NAME'],
+            'api_key'           => $_ENV['RACKSPACE_API_KEY'],
+            'max_files'         => $_ENV['RACKSPACE_MAX_FILES'],
+            'scan_files'        => $_ENV['RACKSPACE_SCAN_FILES']
         ];
 
         return new static($basePath, $options);

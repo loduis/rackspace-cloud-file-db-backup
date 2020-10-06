@@ -2,8 +2,8 @@
 .php_cs.cache
 composer.lock
 
+examples/tests/
+
 .idea/
 vendor/
 src/Old/
-
-

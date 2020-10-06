@@ -107,7 +107,7 @@ class Cache implements IteratorAggregate
     {
         $data = [];
         foreach ($this->container->all($this->filterParams()) as $file) {
-            $name = $file->getName();
+            $name = $file->name;
             if ($time = File::extractTime($name)) {
                 $data[$name] = $time;
             }
