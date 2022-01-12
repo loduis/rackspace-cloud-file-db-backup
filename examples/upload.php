@@ -17,7 +17,6 @@ try {
     }
 
     // Delete or move oldest from container
-
     if (($oldest = $app->findOldest())) {
         if ($oldest->isCopyOfEndMonth()) {
             if ($oldest->move('db/history')) {

@@ -4,13 +4,12 @@ namespace Rackspace\CloudFiles\Backup;
 
 use Throwable;
 use OpenStack\Common\Error\BadResponseError;
+use OpenStack\ObjectStore\v1\Models\Container as ModelsContainer;
+use OpenStack\ObjectStore\v1\Models\StorageObject;
 
 class Container
 {
-    /**
-     * @var \OpenCloud\ObjectStore\Resource\Container
-     */
-    private $store;
+    private ModelsContainer $store;
 
     private $maxFiles;
 
@@ -49,7 +48,7 @@ class Container
      */
     public function download($filename)
     {
-        return $this->get($filename)->getContent();
+        return (string) $this->get($filename)->download();
     }
 
     /**
@@ -58,7 +57,7 @@ class Container
      * @param  string $filename
      * @return \OpenCloud\ObjectStore\Resource\DataObject
      */
-    public function get($filename = null)
+    public function get($filename = null): StorageObject
     {
         return $this->store->getObject($filename);
     }
@@ -67,7 +66,7 @@ class Container
      * @param  array $params
      * @return \OpenCloud\ObjectStore\Resource\DataObject[]
      */
-    public function all(array $params = [])
+    public function all(array $params = []): \Generator
     {
         return $this->store->listObjects($params);
     }
